@@ -37,10 +37,26 @@ def system_data_update():
     return NODE_IP
 
 
+@bp.route('/save-unsaved-readings', methods=["POST"])
+def save_unsaved_readings():
+    unsaved_readings = request.json
+    print(f"Unsaved Readings | {unsaved_readings}")
+    return jsonify(unsaved_readings)
+
+
+@bp.route('/get-nodes-list', methods=["GET", "POST"])
+def get_nodes_list():
+    for key in SYSTEM_NODES:
+        if SYSTEM_NODES[key] == []:
+            return None
+        else:
+            return g.system_nodes
+
+
 @bp.before_app_request
-def load_logged_in_user():
+def load_system_nodes():
     for key in SYSTEM_NODES:
         if SYSTEM_NODES[key] == []:
             g.system_nodes = {}
-    else:
-        g.system_nodes = SYSTEM_NODES
+        else:
+            g.system_nodes = SYSTEM_NODES

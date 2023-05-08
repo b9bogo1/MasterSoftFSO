@@ -5,9 +5,10 @@ import time
 import os
 
 NODE = {
-    "ip": "127.0.0.1:60305",
+    "ip": "127.0.0.1",
     "hostname": "Master-FSO",
     "site": "FSO",
+    "port": "60305",
     "power": -1
 }
 
@@ -49,7 +50,7 @@ class ManageNetworkDataFlow(Thread):
             # Check the status of each node in the network and add it to the corresponding list if it is online
             for node in nodes:
                 if "Master" in node["hostname"]:
-                    node_status_check_url = f"http://{node['ip']}/system-data-update"
+                    node_status_check_url = f"http://{node['ip']}:{node['port']}/system-data-update"
                     # Use a try-except block to handle any request exceptions
                     try:
                         master_node_status_check = requests.get(node_status_check_url)
@@ -59,7 +60,7 @@ class ManageNetworkDataFlow(Thread):
                             master_hostname_list.append(node["hostname"])
                     except requests.exceptions.RequestException as e:
                         # Handle the exception
-                        print(f"No connexion to: {node['ip']}")
+                        print(f"No connexion to: {node['ip']}:{node['port']}")
             # If there is at least one master node online, sort the hostname list and assign power
             # values based on the order
             if len(SYSTEM_NODES["master_list"]) >= 1:
@@ -72,18 +73,18 @@ class ManageNetworkDataFlow(Thread):
                 for node in SYSTEM_NODES["master_list"]:
                     if node["hostname"] in master_hostname_sorted_tuple:
                         node["power"] = master_hostname_sorted_tuple.index(node["hostname"])
-            node_status_check_url = f"http://{NODE['ip']}/system-data-update"
+            node_status_check_url = f"http://{NODE['ip']}:{NODE['port']}/system-data-update"
             headers = {"Content-Type": "application/json"}
-            master_nodes_data = json.dumps(SYSTEM_NODES)
-            master_nodes_list = requests.post(node_status_check_url, data=master_nodes_data, headers=headers)
+            master_nodes_list = requests.post(node_status_check_url, data=json.dumps(SYSTEM_NODES), headers=headers)
             if master_nodes_list.status_code == 200:
                 if NODE["power"] == 0:
                     for node in nodes:
-                        node_status_check_url = f"http://{node['ip']}/system-data-update"
+                        node_status_check_url = f"http://{node['ip']}:{node['port']}/system-data-update"
                         # Use a try-except block to handle any request exceptions
                         try:
-                            master_node_status_check = requests.get(node_status_check_url)
-                            if master_node_status_check.status_code == 200:
+                            node_status_check = requests.post(node_status_check_url, data=json.dumps(SYSTEM_NODES),
+                                                              headers=headers)
+                            if node_status_check.status_code == 200:
                                 if "Xmter" in node["hostname"]:
                                     # Append the node to the corresponding list based on its hostname
                                     SYSTEM_NODES["transmitter_list"].append(node)
@@ -98,9 +99,8 @@ class ManageNetworkDataFlow(Thread):
                                     SYSTEM_NODES["interface_list"].append(node)
                         except requests.exceptions.RequestException as e:
                             # Handle the exception
-                            print(f"No connexion to: {node['ip']}")
-                    node_status_check_url = f"http://{NODE['ip']}/system-data-update"
-                    headers = {"Content-Type": "application/json"}
+                            print(f"No connexion to: {node['ip']}:{node['port']}")
+                    node_status_check_url = f"http://{NODE['ip']}:{NODE['port']}/system-data-update"
                     online_nodes = json.dumps(SYSTEM_NODES)
                     online_nodes_list = requests.post(node_status_check_url, data=online_nodes, headers=headers)
                     if online_nodes_list.status_code == 200:
@@ -110,11 +110,11 @@ class ManageNetworkDataFlow(Thread):
                                 "order_num": int(time.time() * 1000000),
                                 "request_type": "External"
                             })
-                            headers = {"Content-Type": "application/json"}
-                            xmter_data_received = requests.post(f"http://{Xmter['ip']}/get-reading",
+                            xmter_data_received = requests.post(f"http://{Xmter['ip']}:{Xmter['port']}/get-reading",
                                                                 data=node_data, headers=headers)
                             if xmter_data_received.status_code == 200:
-                                print(f"Data received from {Xmter['ip']}")
+                                reading_from_transmitter = xmter_data_received.json()
+                                print(f"{Xmter['hostname']} | {reading_from_transmitter}")
                 elif NODE["power"] == 1:
                     pass
                 elif NODE["power"] == 2:

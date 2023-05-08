@@ -1,25 +1,41 @@
 import os
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import create_engine
 from flask_migrate import Migrate
+from flask_replicated import FlaskReplicated
+from MasterSoft.local_configs import PRODUCTION, DATABASE_PASSWORD, APP_SECRET_KEY
 
 # create extensions instances
 db = SQLAlchemy()  # create a SQLAlchemy object to handle database operations
 migrate = Migrate()  # create a Migrate object to handle database migrations
 
-SERVER_NAME = "127.0.0.1:60305"
+if not PRODUCTION:
+    SERVER_NAME = "127.0.0.1:60305"
+else:
+    SERVER_NAME = "10.0.0.105:80"
 
 
 def create_app(test_config=None):
     # create and configure the app
     app = Flask(__name__, instance_relative_config=True)  # create a Flask app object with relative instance path
-    app.config.from_mapping(
-        SECRET_KEY='dev',  # set the secret key for the app
-        SQLALCHEMY_DATABASE_URI='sqlite:///' + os.path.join(app.instance_path, 'MasterSoft.sqlite'),
-        # set the database URI for the app
-    )
+    if not PRODUCTION:
+        app.config.from_mapping(
+            SECRET_KEY='dev',  # set the secret key for the app
+            SQLALCHEMY_DATABASE_URI='sqlite:///' + os.path.join(app.instance_path, 'MasterSoft.sqlite'),
+            # set the database URI for the app
+        )
+    else:
+        app.config['SECRET_KEY'] = APP_SECRET_KEY
+        app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql://bbogo:{DATABASE_PASSWORD}@10.0.0.220/datasoft'
+        app.config['SQLALCHEMY_BINDS'] = {
+            'main': app.config['SQLALCHEMY_DATABASE_URI'],
+            'backup': f'mysql://bbogo:{DATABASE_PASSWORD}@10.0.0.221/datasoft'
+        }
+        replicated = FlaskReplicated(app)
+
     # Set the server name and port of the app
-    app.config["SERVER_NAME"] = SERVER_NAME
+    # app.config["SERVER_NAME"] = SERVER_NAME
     if test_config is None:
         # load the instance config, if it exists, when not testing
         app.config.from_pyfile('config.py', silent=True)  # load the config file from the instance folder
