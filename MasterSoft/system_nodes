@@ -171,12 +171,18 @@
       "ip":"10.0.0.220",
       "hostname":"Data-Server-1",
       "site":"PS1",
-      "port":"80"
+      "port":"5432"
    },
    {
       "ip":"10.0.0.221",
       "hostname":"Data-Server-2",
       "site":"PRS",
-      "port":"80"
+      "port":"5432"
+   },
+   {
+      "ip":"10.0.0.222",
+      "hostname":"Data-Server-3",
+      "site":"PS3",
+      "port":"5432"
    }
 ]

@@ -2,32 +2,21 @@ from threading import Thread
 import requests
 import json
 import time
-import os
+from MasterSoft.models import Reading
+from MasterSoft.local_configs import get_node, get_nodes_list
 
-NODE = {
-    "ip": "127.0.0.1",
-    "hostname": "Master-FSO",
-    "site": "FSO",
-    "port": "60305",
-    "power": -1
-}
+NODE = get_node()
+nodes = get_nodes_list()
+
+SAVE_READING_URL = f"http://{NODE['ip']}:{NODE['port']}/save-reading"
 
 # Create a dictionary of empty lists for different types of nodes
 SYSTEM_NODES = {key: [] for key in
                 ["master_list", "transmitter_list", "data_server_list", "maintenance_pc_list", "interface_list"]}
 
-# get the MasterSoft directory of the script`
-MasterSoft_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-file_path = os.path.join(MasterSoft_dir, "system_nodes_local")
-
 
 def clean_string(s):
     return "".join(c for c in s.lower() if c.isalnum())
-
-
-# Load the nodes data from a file using requests' JSON decoder
-with open(file_path) as nodes_file:
-    nodes = json.load(nodes_file)
 
 
 class ManageNetworkDataFlow(Thread):
@@ -114,7 +103,19 @@ class ManageNetworkDataFlow(Thread):
                                                                 data=node_data, headers=headers)
                             if xmter_data_received.status_code == 200:
                                 reading_from_transmitter = xmter_data_received.json()
-                                print(f"{Xmter['hostname']} | {reading_from_transmitter}")
+                                headers = {"Content-Type": "application/json"}
+                                new_reading = json.dumps({
+                                    "trans_id": reading_from_transmitter["trans_id"],
+                                    "created_at": reading_from_transmitter["created_at"],
+                                    "order_num": reading_from_transmitter["order_num"],
+                                    "requestor_id": reading_from_transmitter["requestor_id"],
+                                    "temp_1": reading_from_transmitter["temp_1"],
+                                    "temp_2": reading_from_transmitter["temp_2"],
+                                    "rtd_1": reading_from_transmitter["rtd_1"],
+                                    "rtd_2": reading_from_transmitter["rtd_2"],
+                                    "is_data_transmitted": reading_from_transmitter["is_data_transmitted"]
+                                })
+                                save_reading = requests.post(SAVE_READING_URL, data=new_reading, headers=headers)
                 elif NODE["power"] == 1:
                     pass
                 elif NODE["power"] == 2:

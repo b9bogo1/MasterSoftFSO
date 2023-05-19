@@ -1,38 +1,36 @@
 import os
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import create_engine
 from flask_migrate import Migrate
-from flask_replicated import FlaskReplicated
 from MasterSoft.local_configs import PRODUCTION, DATABASE_PASSWORD, APP_SECRET_KEY
+from MasterSoft.app_configs.databases_uri import check_main_db
 
 # create extensions instances
 db = SQLAlchemy()  # create a SQLAlchemy object to handle database operations
 migrate = Migrate()  # create a Migrate object to handle database migrations
 
-if not PRODUCTION:
-    SERVER_NAME = "127.0.0.1:60305"
-else:
-    SERVER_NAME = "10.0.0.105:80"
-
 
 def create_app(test_config=None):
     # create and configure the app
     app = Flask(__name__, instance_relative_config=True)  # create a Flask app object with relative instance path
-    if not PRODUCTION:
-        app.config.from_mapping(
-            SECRET_KEY='dev',  # set the secret key for the app
-            SQLALCHEMY_DATABASE_URI='sqlite:///' + os.path.join(app.instance_path, 'MasterSoft.sqlite'),
-            # set the database URI for the app
-        )
-    else:
-        app.config['SECRET_KEY'] = APP_SECRET_KEY
-        app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql://bbogo:{DATABASE_PASSWORD}@10.0.0.220/datasoft'
-        app.config['SQLALCHEMY_BINDS'] = {
-            'main': app.config['SQLALCHEMY_DATABASE_URI'],
-            'backup': f'mysql://bbogo:{DATABASE_PASSWORD}@10.0.0.221/datasoft'
-        }
-        replicated = FlaskReplicated(app)
+    # app.config.from_object(CustomConfig)
+    app.config["SECRET_KEY"] = APP_SECRET_KEY
+
+    def app_data_update():
+        # use a try-except block to handle any exceptions
+        try:
+            # use an if statement to set the database URI for the app
+            main_db_uri = check_main_db()
+            if main_db_uri:
+                app.config["SQLALCHEMY_DATABASE_URI"] = main_db_uri
+                print(f"Main database URI: {main_db_uri}")
+            else:
+                print("No primary node found")
+        except Exception as e:
+            print(f"An error occurred: {e}")
+    app_data_update()
+
+    app.before_request(app_data_update)
 
     # Set the server name and port of the app
     # app.config["SERVER_NAME"] = SERVER_NAME
@@ -62,7 +60,7 @@ def create_app(test_config=None):
     # define error handlers
     @app.errorhandler(404)
     def page_not_found(error):
-        return 'Page not found', 404  # return a custom message and status code for 404 errors
+        return 'Page not found', 404  # return a custom message and status code for 404 error
 
     from MasterSoft.manager.runtime import ManageNetworkDataFlow
     handle_network_data_flow = ManageNetworkDataFlow()

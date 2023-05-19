@@ -1,4 +1,4 @@
-from sqlalchemy import DateTime, event
+from sqlalchemy import DateTime
 import datetime
 from MasterSoft import db
 
@@ -20,15 +20,17 @@ class Reading(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     trans_id = db.Column(db.String(120), nullable=False)
     created_at = db.Column(DateTime, default=datetime.datetime.utcnow)
-    order_num = db.Column(db.Integer, nullable=False)
+    order_num = db.Column(db.BigInteger, nullable=False)
     requestor_id = db.Column(db.String(20), nullable=False)
     temp_1 = db.Column(db.Float, nullable=False)
     temp_2 = db.Column(db.Float, nullable=False)
+    rtd_1 = db.Column(db.Float, nullable=False)
+    rtd_2 = db.Column(db.Float, nullable=False)
     is_data_transmitted = db.Column(db.Boolean, default=False)
 
     @repr
     def __repr__(self):
-        return f'<User {self.trans_id, self.id}>'
+        return f'<Reading {self.trans_id, self.id}>'
 
     # define the as_dict method here
     def as_dict(self):

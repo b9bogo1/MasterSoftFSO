@@ -171,12 +171,18 @@
       "ip":"127.0.0.1",
       "hostname":"Data-Server-1",
       "site":"PS1",
-      "port":"60601"
+      "port":"60800"
    },
    {
       "ip":"127.0.0.1",
       "hostname":"Data-Server-2",
       "site":"PRS",
-      "port":"60602"
+      "port":"60801"
+   },
+   {
+      "ip":"127.0.0.1",
+      "hostname":"Data-Server-3",
+      "site":"PS3",
+      "port":"60802"
    }
 ]
