@@ -6,45 +6,72 @@
 
 {% block content %}
 <div id="dashboard">
-  <div id="readings" class="d-flex justify-content-center display-5 fw-bold p-4">Loading...</div>
-  <table id="status-table" class="table table-sm table-primary mb-4">
-    <thead>
-      <tr>
-        <th scope="col">Status</th>
-        <th scope="col">Order#</th>
-        <th scope="col">Requestor</th>
-        <th scope="col">Last RX</th>
-        <th scope="col">Last RRQ</th>
-        <th scope="col">Last RRS</th>
-        <th scope="col">Last TX</th>
-        <th scope="col">Counter</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <th>
-          <div id="square-box" class="status-box rounded-5"></div>
-        </th>
-        <th id="order-num-head">Load...</th>
-        <th id="requestor-id-head">Load...</th>
-        <th id="last_rx">Load...</th>
-        <th id="last_rrq">Load...</th>
-        <th id="last_rrs">Load...</th>
-        <th id="last_tx">Load...</th>
-        <th id="counter">Load...</th>
-      </tr>
-    </tbody>
-  </table>
+  <div id="power-level" class="d-flex justify-content-center fs-3 p-3">Loading...</div>
+  <div class="container border border-white rounded-3 p-2 mb-2">
+    <div class="row">
+      <div class="col-md my-2 d-flex justify-content-center text-black">
+            <span class="card border border-dark rounded p-2 position-relative" style="width: fit-content">
+              Base Master
+              <span id="base-master" class="border border-white position-absolute top-100 start-100 translate-middle badge rounded bg-black">
+                Loading...
+              </span>
+            </span>
+      </div>
+      <div class="col-md my-2 text-black d-flex justify-content-center">
+            <span class="card border border-dark rounded p-2 position-relative" style="width: fit-content">
+              Online Transmitters
+              <span id="online-xmter" class="border border-white position-absolute top-100 start-100 translate-middle badge rounded bg-black">
+                Loading...
+              </span>
+            </span>
+      </div>
+      <div class="col-md my-2 text-center text-black d-flex justify-content-center">
+            <span class="card border border-dark rounded p-2 position-relative" style="width: fit-content">
+              Online Masters
+              <span id="online-master" class="border border-white position-absolute top-100 start-100 translate-middle badge rounded bg-black">
+                Loading...
+              </span>
+            </span>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md my-2 text-black d-flex justify-content-center">
+            <span class="card border border-dark rounded p-2 position-relative">
+              Online Web Servers
+              <span id="web-server" class="border border-white position-absolute top-100 start-100 translate-middle badge rounded bg-black">
+                Loading...
+              </span>
+            </span>
+      </div>
+      <div class="col-md my-2 text-black d-flex justify-content-center">
+            <span class="card border border-dark rounded p-2 position-relative">
+              Databases Cluster
+              <span id="data-server" class="border border-white position-absolute top-100 start-100 translate-middle badge rounded bg-black">
+                Loading...
+              </span>
+            </span>
+      </div>
+      <div class="col-md my-2 text-black d-flex justify-content-center">
+            <span class="card border border-dark rounded p-2 position-relative">
+              Maint. Computer
+              <span id="main-pc" class="border border-white position-absolute top-100 start-100 translate-middle badge rounded bg-black">
+                Loading...
+              </span>
+            </span>
+      </div>
+    </div>
+  </div>
   <table id="reading-table" class="table table-sm table-bordered border-white table-primary">
     <thead>
       <tr>
         <th scope="col">ID#</th>
         <th scope="col">Order#</th>
-        <th scope="col">PT1000 RTD 1</th>
+        <th scope="col">Xmter ID</th>
+        <th scope="col">RTD 1</th>
         <th scope="col">Temperature 1</th>
-        <th scope="col">PT1000 RTD 2</th>
+        <th scope="col">RTD 2</th>
         <th scope="col">Temperature 2</th>
-        <th scope="col">Requestor</th>
+        <th scope="col">Requestor ID</th>
         <th scope="col">At</th>
       </tr>
     </thead>
@@ -52,6 +79,7 @@
       <tr>
         <th id="id-0">Load...</th>
         <th id="order-num-0">Load...</th>
+        <th id="xmter-0">Load...</th>
         <th id="rtd-1-0">Load...</th>
         <th id="temp-1-0">Load...</th>
         <th id="rtd-2-0">Load...</th>
@@ -62,6 +90,7 @@
       <tr>
         <th id="id-1">Load...</th>
         <th id="order-num-1">Load...</th>
+        <th id="xmter-1">Load...</th>
         <th id="rtd-1-1">Load...</th>
         <th id="temp-1-1">Load...</th>
         <th id="rtd-2-1">Load...</th>
@@ -72,6 +101,7 @@
       <tr>
         <th id="id-2">Load...</th>
         <th id="order-num-2">Load...</th>
+        <th id="xmter-2">Load...</th>
         <th id="rtd-1-2">Load...</th>
         <th id="temp-1-2">Load...</th>
         <th id="rtd-2-2">Load...</th>
@@ -82,6 +112,7 @@
       <tr>
         <th id="id-3">Load...</th>
         <th id="order-num-3">Load...</th>
+        <th id="xmter-3">Load...</th>
         <th id="rtd-1-3">Load...</th>
         <th id="temp-1-3">Load...</th>
         <th id="rtd-2-3">Load...</th>
@@ -92,6 +123,7 @@
       <tr>
         <th id="id-4">Load...</th>
         <th id="order-num-4">Load...</th>
+        <th id="xmter-4">Load...</th>
         <th id="rtd-1-4">Load...</th>
         <th id="temp-1-4">Load...</th>
         <th id="rtd-2-4">Load...</th>
@@ -102,6 +134,7 @@
       <tr>
         <th id="id-5">Load...</th>
         <th id="order-num-5">Load...</th>
+        <th id="xmter-5">Load...</th>
         <th id="rtd-1-5">Load...</th>
         <th id="temp-1-5">Load...</th>
         <th id="rtd-2-5">Load...</th>

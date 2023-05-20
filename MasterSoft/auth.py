@@ -22,7 +22,7 @@ def register():
         error = None
         is_user_allowed = False
 
-        file = open('TranSoft/allowed_users', 'r') # Open the file in read mode
+        file = open('MasterSoft/allowed_users', 'r') # Open the file in read mode
         content = file.read() # Read the file content as a string
         file.close() # Close the file
         import json # Import the json module to parse the string as a list of dictionaries

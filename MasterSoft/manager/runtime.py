@@ -7,6 +7,7 @@ from MasterSoft.local_configs import get_node, get_nodes_list
 
 NODE = get_node()
 nodes = get_nodes_list()
+CYCLE_TIME = 30  # Time in seconds
 
 SAVE_READING_URL = f"http://{NODE['ip']}:{NODE['port']}/save-reading"
 
@@ -30,13 +31,19 @@ class ManageNetworkDataFlow(Thread):
         """A method that runs in a loop and checks the status and data of each node."""
         global master_hostname_list
         global master_hostname_sorted_tuple
+        # Reset the lists of nodes
+        for key in SYSTEM_NODES:
+            SYSTEM_NODES[key] = []
+        master_hostname_list = []
         while True:
-            # Reset the lists of nodes
-            for key in SYSTEM_NODES:
-                SYSTEM_NODES[key] = []
-                master_hostname_list = []
-            time.sleep(5)
+            time.sleep(CYCLE_TIME)
             # Check the status of each node in the network and add it to the corresponding list if it is online
+            master_node_list = []
+            xmter_node_list = []
+            maint_node_list = []
+            data_node_list = []
+            interface_node_list = []
+            local_master_hostname_list = []
             for node in nodes:
                 if "Master" in node["hostname"]:
                     node_status_check_url = f"http://{node['ip']}:{node['port']}/system-data-update"
@@ -45,23 +52,27 @@ class ManageNetworkDataFlow(Thread):
                         master_node_status_check = requests.get(node_status_check_url)
                         if master_node_status_check.status_code == 200:
                             # Append the node to the corresponding list based on its hostname
+                            master_node_list.append(node)
                             SYSTEM_NODES["master_list"].append(node)
-                            master_hostname_list.append(node["hostname"])
+                            local_master_hostname_list.append(node["hostname"])
                     except requests.exceptions.RequestException as e:
                         # Handle the exception
                         print(f"No connexion to: {node['ip']}:{node['port']}")
+
+            master_hostname_list = local_master_hostname_list
             # If there is at least one master node online, sort the hostname list and assign power
             # values based on the order
-            if len(SYSTEM_NODES["master_list"]) >= 1:
+            if len(master_node_list) >= 1:
                 # Sort the string list by the cleaned strings and convert to a tuple
                 master_hostname_sorted_tuple = tuple(sorted(master_hostname_list, key=clean_string))
                 # Update the power value of the current node if it is a master node
                 if NODE["hostname"] in master_hostname_sorted_tuple:
                     NODE["power"] = master_hostname_sorted_tuple.index(NODE["hostname"])
                 # Update the power values of the other master nodes in the system nodes list
-                for node in SYSTEM_NODES["master_list"]:
+                for node in master_node_list:
                     if node["hostname"] in master_hostname_sorted_tuple:
                         node["power"] = master_hostname_sorted_tuple.index(node["hostname"])
+            SYSTEM_NODES["master_list"] = master_node_list
             node_status_check_url = f"http://{NODE['ip']}:{NODE['port']}/system-data-update"
             headers = {"Content-Type": "application/json"}
             master_nodes_list = requests.post(node_status_check_url, data=json.dumps(SYSTEM_NODES), headers=headers)
@@ -76,19 +87,23 @@ class ManageNetworkDataFlow(Thread):
                             if node_status_check.status_code == 200:
                                 if "Xmter" in node["hostname"]:
                                     # Append the node to the corresponding list based on its hostname
-                                    SYSTEM_NODES["transmitter_list"].append(node)
+                                    xmter_node_list.append(node)
                                 elif "Maint" in node["hostname"]:
                                     # Append the node to the corresponding list based on its hostname
-                                    SYSTEM_NODES["maintenance_pc_list"].append(node)
+                                    maint_node_list.append(node)
                                 elif "Data" in node["hostname"]:
                                     # Append the node to the corresponding list based on its hostname
-                                    SYSTEM_NODES["data_server_list"].append(node)
+                                    data_node_list.append(node)
                                 elif "Interface" in node["hostname"]:
                                     # Append the node to the corresponding list based on its hostname
-                                    SYSTEM_NODES["interface_list"].append(node)
+                                    interface_node_list.append(node)
                         except requests.exceptions.RequestException as e:
                             # Handle the exception
                             print(f"No connexion to: {node['ip']}:{node['port']}")
+                    SYSTEM_NODES["transmitter_list"] = xmter_node_list
+                    SYSTEM_NODES["data_server_list"] = data_node_list
+                    SYSTEM_NODES["maintenance_pc_list"] = maint_node_list
+                    SYSTEM_NODES["interface_list"] = interface_node_list
                     node_status_check_url = f"http://{NODE['ip']}:{NODE['port']}/system-data-update"
                     online_nodes = json.dumps(SYSTEM_NODES)
                     online_nodes_list = requests.post(node_status_check_url, data=online_nodes, headers=headers)
