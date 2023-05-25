@@ -78,40 +78,37 @@ class ManageNetworkDataFlow(Thread):
             headers = {"Content-Type": "application/json"}
             master_nodes_list = requests.post(node_status_check_url, data=json.dumps(SYSTEM_NODES), headers=headers)
             if master_nodes_list.status_code == 200:
+                for node in nodes:
+                    node_status_check_url = f"http://{node['ip']}:{node['port']}/system-data-update"
+                    # Use a try-except block to handle any request exceptions
+                    try:
+                        node_status_check = requests.post(node_status_check_url, data=json.dumps(SYSTEM_NODES),
+                                                          headers=headers)
+                        if node_status_check.status_code == 200:
+                            if "Xmter" in node["hostname"]:
+                                # Append the node to the corresponding list based on its hostname
+                                xmter_node_list.append(node)
+                            elif "Maint" in node["hostname"]:
+                                # Append the node to the corresponding list based on its hostname
+                                maint_node_list.append(node)
+                            elif "Data" in node["hostname"]:
+                                # Append the node to the corresponding list based on its hostname
+                                data_node_list.append(node)
+                            elif "Interface" in node["hostname"]:
+                                # Append the node to the corresponding list based on its hostname
+                                interface_node_list.append(node)
+                    except requests.exceptions.RequestException as e:
+                        # Handle the exception
+                        print(f"No connexion to: {node['ip']}:{node['port']}")
+                SYSTEM_NODES["transmitter_list"] = xmter_node_list
+                SYSTEM_NODES["data_server_list"] = data_node_list
+                SYSTEM_NODES["maintenance_pc_list"] = maint_node_list
+                SYSTEM_NODES["interface_list"] = interface_node_list
+                nodes_url = f"http://{NODE['ip']}:{NODE['port']}/system-data-update"
+                headers = {"Content-Type": "application/json"}
+                master_nodes_list = requests.post(nodes_url, data=json.dumps(SYSTEM_NODES), headers=headers)
+
                 if NODE["power"] == 0:
-                    for node in nodes:
-                        node_status_check_url = f"http://{node['ip']}:{node['port']}/system-data-update"
-                        # Use a try-except block to handle any request exceptions
-                        try:
-                            node_status_check = requests.post(node_status_check_url, data=json.dumps(SYSTEM_NODES),
-                                                              headers=headers)
-                            if node_status_check.status_code == 200:
-                                if "Xmter" in node["hostname"]:
-                                    # Append the node to the corresponding list based on its hostname
-                                    xmter_node_list.append(node)
-                                elif "Maint" in node["hostname"]:
-                                    # Append the node to the corresponding list based on its hostname
-                                    maint_node_list.append(node)
-                                elif "Data" in node["hostname"]:
-                                    # Append the node to the corresponding list based on its hostname
-                                    data_node_list.append(node)
-                                elif "Interface" in node["hostname"]:
-                                    # Append the node to the corresponding list based on its hostname
-                                    interface_node_list.append(node)
-                        except requests.exceptions.RequestException as e:
-                            # Handle the exception
-                            print(f"No connexion to: {node['ip']}:{node['port']}")
-                    SYSTEM_NODES["transmitter_list"] = xmter_node_list
-                    SYSTEM_NODES["data_server_list"] = data_node_list
-                    SYSTEM_NODES["maintenance_pc_list"] = maint_node_list
-                    SYSTEM_NODES["interface_list"] = interface_node_list
-                    for master_node in SYSTEM_NODES["master_list"]:
-                        master_node_url = f"http://{master_node['ip']}:{master_node['port']}/system-data-update"
-                        headers = {"Content-Type": "application/json"}
-                        update_master_response = requests.post(master_node_url, data=json.dumps(SYSTEM_NODES),
-                                                               headers=headers)
-                        if update_master_response.status_code != 200:
-                            print(f"Master nodes {master_node['hostname']} not updated")
                     for Xmter in SYSTEM_NODES["transmitter_list"]:
                         node_data = json.dumps({
                             "requestor": NODE["hostname"],
