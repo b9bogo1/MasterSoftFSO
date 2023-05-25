@@ -31,6 +31,7 @@ class ManageNetworkDataFlow(Thread):
         """A method that runs in a loop and checks the status and data of each node."""
         global master_hostname_list
         global master_hostname_sorted_tuple
+        global SYSTEM_NODES
         # Reset the lists of nodes
         for key in SYSTEM_NODES:
             SYSTEM_NODES[key] = []
@@ -104,33 +105,36 @@ class ManageNetworkDataFlow(Thread):
                     SYSTEM_NODES["data_server_list"] = data_node_list
                     SYSTEM_NODES["maintenance_pc_list"] = maint_node_list
                     SYSTEM_NODES["interface_list"] = interface_node_list
-                    node_status_check_url = f"http://{NODE['ip']}:{NODE['port']}/system-data-update"
-                    online_nodes = json.dumps(SYSTEM_NODES)
-                    online_nodes_list = requests.post(node_status_check_url, data=online_nodes, headers=headers)
-                    if online_nodes_list.status_code == 200:
-                        for Xmter in SYSTEM_NODES["transmitter_list"]:
-                            node_data = json.dumps({
-                                "requestor": NODE["hostname"],
-                                "order_num": int(time.time() * 1000000),
-                                "request_type": "External"
-                            })
-                            xmter_data_received = requests.post(f"http://{Xmter['ip']}:{Xmter['port']}/get-reading",
+                    for master_node in SYSTEM_NODES["master_list"]:
+                        master_node_url = f"http://{master_node['ip']}:{master_node['port']}/system-data-update"
+                        headers = {"Content-Type": "application/json"}
+                        update_master_response = requests.post(master_node_url, data=json.dumps(SYSTEM_NODES),
+                                                               headers=headers)
+                        if update_master_response.status_code != 200:
+                            print(f"Master nodes {master_node['hostname']} not updated")
+                    for Xmter in SYSTEM_NODES["transmitter_list"]:
+                        node_data = json.dumps({
+                            "requestor": NODE["hostname"],
+                            "order_num": int(time.time() * 1000000),
+                            "request_type": "External"
+                        })
+                        xmter_data_received = requests.post(f"http://{Xmter['ip']}:{Xmter['port']}/get-reading",
                                                                 data=node_data, headers=headers)
-                            if xmter_data_received.status_code == 200:
-                                reading_from_transmitter = xmter_data_received.json()
-                                headers = {"Content-Type": "application/json"}
-                                new_reading = json.dumps({
-                                    "trans_id": reading_from_transmitter["trans_id"],
-                                    "created_at": reading_from_transmitter["created_at"],
-                                    "order_num": reading_from_transmitter["order_num"],
-                                    "requestor_id": reading_from_transmitter["requestor_id"],
-                                    "temp_1": reading_from_transmitter["temp_1"],
-                                    "temp_2": reading_from_transmitter["temp_2"],
-                                    "rtd_1": reading_from_transmitter["rtd_1"],
-                                    "rtd_2": reading_from_transmitter["rtd_2"],
-                                    "is_data_transmitted": reading_from_transmitter["is_data_transmitted"]
-                                })
-                                save_reading = requests.post(SAVE_READING_URL, data=new_reading, headers=headers)
+                        if xmter_data_received.status_code == 200:
+                            reading_from_transmitter = xmter_data_received.json()
+                            headers = {"Content-Type": "application/json"}
+                            new_reading = json.dumps({
+                                "trans_id": reading_from_transmitter["trans_id"],
+                                "created_at": reading_from_transmitter["created_at"],
+                                "order_num": reading_from_transmitter["order_num"],
+                                "requestor_id": reading_from_transmitter["requestor_id"],
+                                "temp_1": reading_from_transmitter["temp_1"],
+                                "temp_2": reading_from_transmitter["temp_2"],
+                                "rtd_1": reading_from_transmitter["rtd_1"],
+                                "rtd_2": reading_from_transmitter["rtd_2"],
+                                "is_data_transmitted": reading_from_transmitter["is_data_transmitted"]
+                            })
+                            save_reading = requests.post(SAVE_READING_URL, data=new_reading, headers=headers)
                 elif NODE["power"] == 1:
                     pass
                 elif NODE["power"] == 2:
